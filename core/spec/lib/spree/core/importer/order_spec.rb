@@ -89,7 +89,7 @@ module Spree
       it 'can build an order from API with just line items' do
         params = { :line_items_attributes => line_items }
 
-        Importer::Order.should_receive(:ensure_variant_id_from_params)
+        Importer::Order.should_receive(:ensure_variant_id_from_params).and_return({variant_id: variant.id, quantity: 5})
         order = Importer::Order.import(user,params)
         order.user.should == nil
         line_item = order.line_items.first
@@ -285,7 +285,6 @@ module Spree
               0 => { variant_id: variant.id, quantity: 1 } }
             }
           )
-          Importer::Order.should_receive(:ensure_variant_id_from_params).twice
           order = Importer::Order.import(user, with_item_params)
           expect(order.shipments).to_not be_empty
         end
@@ -367,7 +366,7 @@ module Spree
             { label: 'Promotion Discount', amount: -3.00 }] }
 
         order = Importer::Order.import(user,params)
-        order.adjustments.all?(&:closed?).should be_true
+        order.adjustments.all?(&:closed?).should be true
         order.adjustments.first.label.should eq 'Shipping Discount'
         order.adjustments.first.amount.should eq -4.99
       end

@@ -512,10 +512,10 @@ module Spree
           end
 
           it "includes the ship_total in the response" do
-            api_get :show, :id => order.to_param
+            api_get :show, id: order.to_param
 
-            json_response['ship_total'].should == '0.0'
-            json_response['display_ship_total'].should == '$0.00'
+            expect(json_response['ship_total']).to eq '10.0'
+            expect(json_response['display_ship_total']).to eq '$10.00'
           end
 
           it "returns available shipments for an order" do
@@ -529,6 +529,7 @@ module Spree
             json_shipping_method = shipment["shipping_methods"][0]
             json_shipping_method["id"].should == shipping_method.id
             json_shipping_method["name"].should == shipping_method.name
+            json_shipping_method["code"].should == shipping_method.code
             json_shipping_method["zones"].should_not be_empty
             json_shipping_method["shipping_categories"].should_not be_empty
 
@@ -538,8 +539,9 @@ module Spree
             shipping_rate = shipment["shipping_rates"][0]
             shipping_rate["name"].should == json_shipping_method["name"]
             shipping_rate["cost"].should == "10.0"
-            shipping_rate["selected"].should be_true
+            shipping_rate["selected"].should be true
             shipping_rate["display_cost"].should == "$10.00"
+            shipping_rate["shipping_method_code"].should == json_shipping_method["code"]
 
             shipment["stock_location_name"].should_not be_blank
             manifest_item = shipment["manifest"][0]
@@ -563,9 +565,9 @@ module Spree
 
       it "responds with orders updated_at with miliseconds precision" do
         if ActiveRecord::Base.connection.adapter_name == "Mysql2"
-          pending "MySQL does not support millisecond timestamps."
+          skip "MySQL does not support millisecond timestamps."
         else
-          pending "Probable need to make it call as_json. See https://github.com/rails/rails/commit/0f33d70e89991711ff8b3dde134a61f4a5a0ec06"
+          skip "Probable need to make it call as_json. See https://github.com/rails/rails/commit/0f33d70e89991711ff8b3dde134a61f4a5a0ec06"
         end
 
         api_get :index

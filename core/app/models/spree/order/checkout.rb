@@ -71,7 +71,7 @@ module Spree
 
               if states[:payment]
                 before_transition to: :complete do |order|
-                  if order.payment_required? && order.payments.empty?
+                  if order.payment_required? && order.payments.valid.empty?
                     order.errors.add(:base, Spree.t(:no_payment_found))
                     false
                   elsif order.payment_required?
@@ -95,6 +95,7 @@ module Spree
               if states[:delivery]
                 before_transition to: :delivery, do: :create_proposed_shipments
                 before_transition to: :delivery, do: :ensure_available_shipping_rates
+                before_transition to: :delivery, do: :set_shipments_cost
                 before_transition from: :delivery, do: :apply_free_shipping_promotions
               end
 
@@ -301,19 +302,17 @@ module Spree
           #   }
           #
           def update_params_payment_source
-            if has_checkout_step?("payment") && self.payment?
-              if @updating_params[:payment_source].present?
-                source_params = @updating_params.delete(:payment_source)[@updating_params[:order][:payments_attributes].first[:payment_method_id].to_s]
+            if @updating_params[:payment_source].present?
+              source_params = @updating_params.delete(:payment_source)[@updating_params[:order][:payments_attributes].first[:payment_method_id].to_s]
 
-                if source_params
-                  @updating_params[:order][:payments_attributes].first[:source_attributes] = source_params
-                end
+              if source_params
+                @updating_params[:order][:payments_attributes].first[:source_attributes] = source_params
               end
+            end
 
-              if @updating_params[:order][:payments_attributes] || @updating_params[:order][:existing_card]
-                @updating_params[:order][:payments_attributes] ||= [{}]
-                @updating_params[:order][:payments_attributes].first[:amount] = self.total
-              end
+            if @updating_params[:order] && (@updating_params[:order][:payments_attributes] || @updating_params[:order][:existing_card])
+              @updating_params[:order][:payments_attributes] ||= [{}]
+              @updating_params[:order][:payments_attributes].first[:amount] = self.total
             end
           end
         end

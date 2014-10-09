@@ -39,7 +39,7 @@ module Spree
       return unless expiry.present?
 
       self[:month], self[:year] =
-      if expiry.match(/\d\s?\/\s?\d/) # will match mm/yy and mm / yyyy
+      if expiry.match(/\d{2}\s?\/\s?\d{2,4}/) # will match mm/yy and mm / yyyy
         expiry.delete(' ').split('/')
       elsif match = expiry.match(/(\d{2})(\d{2,4})/) # will match mmyy and mmyyyy
         [match[1], match[2]]
@@ -48,7 +48,7 @@ module Spree
         self[:year] = "20" + self[:year] if self[:year].length == 2
         self[:year] = self[:year].to_i
       end
-      self[:month] = self[:month].to_i
+      self[:month] = self[:month].to_i if self[:month]
     end
 
     def number=(num)
@@ -140,8 +140,8 @@ module Spree
         if month.to_i < 1 || month.to_i > 12
           errors.add(:base, :expiry_invalid)
         else
-          time = Time.zone.parse("#{year}-#{month}-1")
-          if time < Time.zone.now.to_time.beginning_of_month
+          current = Time.current
+          if year.to_i < current.year or (year.to_i == current.year and month.to_i < current.month)
             errors.add(:base, :card_expired)
           end
         end
@@ -155,8 +155,7 @@ module Spree
     def ensure_one_default
       if self.user_id && self.default
         CreditCard.where(default: true).where.not(id: self.id).where(user_id: self.user_id).each do |ucc|
-          ucc.default = false
-          ucc.save!
+          ucc.update_columns(default: false)
         end
       end
     end

@@ -1,10 +1,12 @@
 require 'spec_helper'
 
+class FakesController < ApplicationController
+  include Spree::Core::ControllerHelpers::Auth
+  def index; render text: 'index'; end
+end
+
 describe Spree::Core::ControllerHelpers::Auth, type: :controller do
-  controller do
-    include Spree::Core::ControllerHelpers::Auth
-    def index; render text: 'index'; end
-  end
+  controller(FakesController) {}
 
   describe '#current_ability' do
     it 'returns Spree::Ability instance' do
@@ -13,8 +15,7 @@ describe Spree::Core::ControllerHelpers::Auth, type: :controller do
   end
 
   describe '#redirect_back_or_default' do
-    controller do
-      include Spree::Core::ControllerHelpers::Auth
+    controller(FakesController) do
       def index; redirect_back_or_default('/'); end
     end
     it 'redirects to session url' do
@@ -29,8 +30,7 @@ describe Spree::Core::ControllerHelpers::Auth, type: :controller do
   end
 
   describe '#set_guest_token' do
-    controller do
-      include Spree::Core::ControllerHelpers::Auth
+    controller(FakesController) do
       def index
         set_guest_token
         render text: 'index'
@@ -64,10 +64,9 @@ describe Spree::Core::ControllerHelpers::Auth, type: :controller do
     end
   end
 
-  describe '#unauthorized' do
-    controller do
-      include Spree::Core::ControllerHelpers::Auth
-      def index; unauthorized; end
+  describe '#redirect_unauthorized_access' do
+    controller(FakesController) do
+      def index; redirect_unauthorized_access; end
     end
     context 'when logged in' do
       before do
@@ -88,7 +87,7 @@ describe Spree::Core::ControllerHelpers::Auth, type: :controller do
         expect(response).to redirect_to('/login')
       end
       it 'redirects root path' do
-        controller.stub(root_path: '/root_path')
+        controller.stub_chain(:spree, :root_path).and_return('/root_path')
         get :index
         expect(response).to redirect_to('/root_path')
       end

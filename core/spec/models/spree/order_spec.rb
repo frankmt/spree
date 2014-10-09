@@ -14,6 +14,37 @@ describe Spree::Order do
     Spree::LegacyUser.stub(:current => mock_model(Spree::LegacyUser, :id => 123))
   end
 
+  context "#canceled_by" do
+    let(:admin_user) { create :admin_user }
+    let(:order) { create :order }
+
+    before do
+      allow(order).to receive(:cancel!)
+    end
+
+    subject { order.canceled_by(admin_user) }
+
+    it 'should cancel the order' do
+      expect(order).to receive(:cancel!)
+      subject
+    end
+
+    it 'should save canceler_id' do
+      subject
+      expect(order.reload.canceler_id).to eq(admin_user.id)
+    end
+
+    it 'should save canceled_at' do
+      subject
+      expect(order.reload.canceled_at).to_not be_nil
+    end
+
+    it 'should have canceler' do
+      subject
+      expect(order.reload.canceler).to eq(admin_user)
+    end
+  end
+
   context "#create" do
     let(:order) { Spree::Order.create }
 
@@ -92,9 +123,9 @@ describe Spree::Order do
     end
 
     it "sets confirmation delivered when finalizing" do
-      expect(order.confirmation_delivered?).to be_false
+      expect(order.confirmation_delivered?).to be false
       order.finalize!
-      expect(order.confirmation_delivered?).to be_true
+      expect(order.confirmation_delivered?).to be true
     end
 
     it "should not send duplicate confirmation emails" do
@@ -146,7 +177,7 @@ describe Spree::Order do
 
     it "should return line_item that has insufficient stock on hand" do
       order.insufficient_stock_lines.size.should == 1
-      order.insufficient_stock_lines.include?(line_item).should be_true
+      order.insufficient_stock_lines.include?(line_item).should be true
     end
   end
 
@@ -257,6 +288,11 @@ describe Spree::Order do
         Spree::Variant.stub(:price_modifier_amount).and_return(0.00)
       end
 
+      after do
+        # reset to avoid test pollution
+        Spree::Order.line_item_comparison_hooks = Set.new
+      end
+
       context "2 equal line items" do
         before do
           order_1.stub(:foos_match).and_return(true)
@@ -273,7 +309,7 @@ describe Spree::Order do
           line_item = order_1.line_items.first
           line_item.quantity.should == 2
           line_item.variant_id.should == variant.id
-        end       
+        end
       end
 
       context "2 different line items" do
@@ -295,7 +331,7 @@ describe Spree::Order do
           line_item = order_1.line_items.last
           line_item.quantity.should == 1
           line_item.variant_id.should == variant.id
-        end       
+        end
       end
     end
 
@@ -407,16 +443,15 @@ describe Spree::Order do
 
   describe "#restart_checkout_flow" do
     it "updates the state column to the first checkout_steps value" do
-      order = create(:order, :state => "delivery")
+      order = create(:order_with_totals, state: "delivery")
       expect(order.checkout_steps).to eql ["address", "delivery", "complete"]
       expect{ order.restart_checkout_flow }.to change{order.state}.from("delivery").to("address")
     end
 
-    context "with custom checkout_steps" do
-      it "updates the state column to the first checkout_steps value" do
-        order = create(:order, :state => "delivery")
-        order.should_receive(:checkout_steps).and_return ["custom_step", "address", "delivery", "complete"]
-        expect{ order.restart_checkout_flow }.to change{order.state}.from("delivery").to("custom_step")
+    context "without line items" do
+      it "updates the state column to cart" do
+        order = create(:order, state: "delivery")
+        expect{ order.restart_checkout_flow }.to change{order.state}.from("delivery").to("cart")
       end
     end
   end
@@ -504,7 +539,7 @@ describe Spree::Order do
     end
 
     it "contains?" do
-      order.contains?(@variant1).should be_true
+      order.contains?(@variant1).should be true
     end
 
     it "gets the quantity of a given variant" do
@@ -517,6 +552,27 @@ describe Spree::Order do
     it "can find a line item matching a given variant" do
       order.find_line_item_by_variant(@variant1).should_not be_nil
       order.find_line_item_by_variant(mock_model(Spree::Variant)).should be_nil
+    end
+
+    context "match line item with options" do
+      before do
+        Spree::Order.register_line_item_comparison_hook(:foos_match)
+      end
+
+      after do
+        # reset to avoid test pollution
+        Spree::Order.line_item_comparison_hooks = Set.new
+      end
+
+      it "matches line item when options match" do
+        order.stub(:foos_match).and_return(true)
+        order.line_item_options_match(@line_items.first, {foos: {bar: :zoo}}).should be true
+      end
+
+      it "does not match line item without options" do
+        order.stub(:foos_match).and_return(false)
+        order.line_item_options_match(@line_items.first, {}).should be false
+      end
     end
   end
 
@@ -610,48 +666,48 @@ describe Spree::Order do
 
     it "should be true for order in the 'complete' state" do
       order.stub(:complete? => true)
-      order.can_ship?.should be_true
+      order.can_ship?.should be true
     end
 
     it "should be true for order in the 'resumed' state" do
       order.stub(:resumed? => true)
-      order.can_ship?.should be_true
+      order.can_ship?.should be true
     end
 
     it "should be true for an order in the 'awaiting return' state" do
       order.stub(:awaiting_return? => true)
-      order.can_ship?.should be_true
+      order.can_ship?.should be true
     end
 
     it "should be true for an order in the 'returned' state" do
       order.stub(:returned? => true)
-      order.can_ship?.should be_true
+      order.can_ship?.should be true
     end
 
     it "should be false if the order is neither in the 'complete' nor 'resumed' state" do
       order.stub(:resumed? => false, :complete? => false)
-      order.can_ship?.should be_false
+      order.can_ship?.should be false
     end
   end
 
   context "#completed?" do
     it "should indicate if order is completed" do
       order.completed_at = nil
-      order.completed?.should be_false
+      order.completed?.should be false
 
       order.completed_at = Time.now
-      order.completed?.should be_true
+      order.completed?.should be true
     end
   end
 
   context "#allow_checkout?" do
     it "should be true if there are line_items in the order" do
       order.stub_chain(:line_items, :count => 1)
-      order.checkout_allowed?.should be_true
+      order.checkout_allowed?.should be true
     end
     it "should be false if there are no line_items in the order" do
       order.stub_chain(:line_items, :count => 0)
-      order.checkout_allowed?.should be_false
+      order.checkout_allowed?.should be false
     end
   end
 
@@ -679,14 +735,14 @@ describe Spree::Order do
       order.state = 'canceled'
       order.shipment_state = 'ready'
       order.completed_at = Time.now
-      order.can_cancel?.should be_false
+      order.can_cancel?.should be false
     end
 
     it "should be true for completed order with no shipment" do
       order.state = 'complete'
       order.shipment_state = nil
       order.completed_at = Time.now
-      order.can_cancel?.should be_true
+      order.can_cancel?.should be true
     end
   end
 
@@ -728,23 +784,38 @@ describe Spree::Order do
   end
 
   describe '#has_non_reimbursement_related_refunds?' do
-    let(:order) { create(:order_ready_to_ship) }
-    subject { order.has_non_reimbursement_related_refunds? }
+    subject do
+      order.has_non_reimbursement_related_refunds?
+    end
 
-    before(:each) do
-      order.payments.first.refunds = [refund]
-      order.save!
-      order.reload
+    context 'no refunds exist' do
+      it { should eq false }
     end
 
     context 'a non-reimbursement related refund exists' do
-      let(:refund) { create(:refund, reimbursement_id: nil, amount: 5)}
+      let(:order) { refund.payment.order }
+      let(:refund) { create(:refund, reimbursement_id: nil, amount: 5) }
+
+      it { should eq true }
+    end
+
+    context 'an old-style refund exists' do
+      let(:order) { create(:order_ready_to_ship) }
+      let(:payment) { order.payments.first.tap { |p| p.stub(profiles_supported: false) } }
+      let!(:refund_payment) {
+        build(:payment, amount: -1, order: order, state: 'completed', source: payment).tap do |p|
+          p.stub(profiles_supported?: false)
+          p.save!
+        end
+      }
 
       it { should eq true }
     end
 
     context 'a reimbursement related refund exists' do
+      let(:order) { refund.payment.order }
       let(:refund) { create(:refund, reimbursement_id: 123, amount: 5)}
+
       it { should eq false }
     end
   end

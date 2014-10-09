@@ -53,6 +53,7 @@ en:
         special_instructions: Special Instructions
         state: State
         total: Total
+        considered_risky: Risky
       spree/order/bill_address:
         address1: Billing address street
         city: Billing address city
@@ -486,6 +487,7 @@ en:
     back_to_users_list: Back To Users List
     back_to_zones_list: Back To Zones List
     backorderable: Backorderable
+    backorderable_default: Backorderable default
     backorders_allowed: backorders allowed
     balance_due: Balance Due
     base_amount: Base Amount
@@ -498,6 +500,8 @@ en:
     calculator: Calculator
     calculator_settings_warning: If you are changing the calculator type, you must save first before you can edit the calculator settings
     cancel: cancel
+    canceler: Canceler
+    canceled_at: Canceled at
     cannot_create_payment_without_payment_methods: You cannot create a payment for an order without any payment methods defined.
     cannot_create_customer_returns: Cannot create customer returns as this order has no shipped units.
     cannot_create_returns: Cannot create returns as this order has no shipped units.
@@ -524,7 +528,7 @@ en:
     choose_dashboard_locale: Choose Dashboard Locale
     choose_location: Choose location
     city: City
-    click_and_drag_on_the_products_to_sort_them: 'Click &amp; drag on the products to sort them.'
+    click_and_drag_on_the_products_to_sort_them: Click and drag on the products to sort them.
     clone: Clone
     close: Close
     close_all_adjustments: Close All Adjustments
@@ -624,7 +628,7 @@ en:
     editing_payment_method: Editing Payment Method
     editing_product: Editing Product
     editing_promotion: Editing Promotion
-    editing_promotion_category: Editing Promotion
+    editing_promotion_category: Editing Promotion Category
     editing_property: Editing Property
     editing_prototype: Editing Prototype
     edit_refund_reason: Edit Refund Reason
@@ -927,16 +931,16 @@ en:
         instructions: Your order has been CANCELED.  Please retain this cancellation information for your records.
         order_summary_canceled: Order Summary [CANCELED]
         subject: Cancellation of Order
-        subtotal: ! 'Subtotal: %{subtotal}'
-        total: ! 'Order Total: %{total}'
+        subtotal: ! 'Subtotal:'
+        total: ! 'Order Total:'
       confirm_email:
         dear_customer: Dear Customer,
         instructions: Please review and retain the following order information for your records.
         order_summary: Order Summary
         subject: Order Confirmation
-        subtotal: ! 'Subtotal: %{subtotal}'
+        subtotal: ! 'Subtotal:'
         thanks: Thank you for your business.
-        total: ! 'Order Total: %{total}'
+        total: ! 'Order Total:'
     order_not_found: We couldn't find your order. Please try that action again.
     order_number: Order %{number}
     order_populator:
@@ -1080,6 +1084,7 @@ en:
         name: Taxon(s)
     promotions: Promotions
     promotion_uses: Promotion uses
+    propagate_all_variants: Propagate all variants
     properties: Properties
     property: Property
     prototype: Prototype
@@ -1224,6 +1229,7 @@ en:
     show_active: Show Active
     show_deleted: Show Deleted
     show_only_complete_orders: Only show complete orders
+    show_only_considered_risky: Only show risky orders
     show_rate_in_label: Show rate in label
     sku: SKU
     skus: SKUs
@@ -1267,6 +1273,7 @@ en:
     tax_included: "Tax (incl.)"
     tax_categories: Tax Categories
     tax_category: Tax Category
+    tax_code: Tax Code
     tax_rate_amount_explanation: Tax rates are a decimal amount to aid in calculations, (i.e. if the tax rate is 5% then enter 0.05)
     tax_rates: Tax Rates
     taxon: Taxon
@@ -1337,7 +1344,7 @@ en:
     validation:
       unpaid_amount_not_zero: "Amount was not fully reimbursed. Still due: %{amount}"
       cannot_be_less_than_shipped_units: cannot be less than the number of shipped units.
-      cannot_destory_line_item_as_inventory_units_have_shipped: Cannot destory line item as some inventory units have shipped.
+      cannot_destroy_line_item_as_inventory_units_have_shipped: Cannot destroy line item as some inventory units have shipped.
       exceeds_available_stock: exceeds available stock. Please ensure line items have a valid quantity.
       is_too_large: is too large -- stock on hand cannot cover requested quantity!
       must_be_int: must be an integer
