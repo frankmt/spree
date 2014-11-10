@@ -45,9 +45,9 @@ module Spree
     alias_attribute :ship_total, :shipment_total
 
     has_many :state_changes, as: :stateful
-    has_many :line_items, -> { order('created_at ASC') }, dependent: :destroy, inverse_of: :order
+    has_many :line_items, -> { order("#{LineItem.table_name}.created_at ASC") }, dependent: :destroy, inverse_of: :order
     has_many :payments, dependent: :destroy
-    has_many :return_authorizations, dependent: :destroy
+    has_many :return_authorizations, dependent: :destroy, inverse_of: :order
     has_many :reimbursements, inverse_of: :order
     has_many :adjustments, -> { order("#{Adjustment.table_name}.created_at ASC") }, as: :adjustable, dependent: :destroy
     has_many :line_item_adjustments, through: :line_items, source: :adjustments
@@ -84,7 +84,7 @@ module Spree
 
     validates :email, presence: true, if: :require_email
     validates :email, email: true, if: :require_email, allow_blank: true
-    validates :number, uniqueness: true
+    validates :number, presence: true, uniqueness: { allow_blank: true }
     validate :has_available_shipment
 
     make_permalink field: :number

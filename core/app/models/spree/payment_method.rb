@@ -8,7 +8,7 @@ module Spree
 
     validates :name, presence: true
 
-    has_many :payments, class_name: "Spree::Payment"
+    has_many :payments, class_name: "Spree::Payment", inverse_of: :payment_method
     has_many :credit_cards, class_name: "Spree::CreditCard"
 
     def self.providers
@@ -66,6 +66,10 @@ module Spree
 
     def supports?(source)
       true
+    end
+
+    def cancel
+      raise NotImplimentedError.new 'You must implement cancel method for this payment method.'
     end
   end
 end
