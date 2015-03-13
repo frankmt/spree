@@ -41,8 +41,8 @@ module Spree
     end
 
     def self.active
-      where('starts_at IS NULL OR starts_at < ?', Time.now).
-        where('expires_at IS NULL OR expires_at > ?', Time.now)
+      where('spree_promotions.starts_at IS NULL OR spree_promotions.starts_at < ?', Time.now).
+        where('spree_promotions.expires_at IS NULL OR spree_promotions.expires_at > ?', Time.now)
     end
 
     def self.order_activatable?(order)
@@ -147,7 +147,21 @@ module Spree
     end
 
     def used_by?(user, excluded_orders = [])
-      orders.where.not(id: excluded_orders.map(&:id)).complete.where(user_id: user.id).exists?
+      [
+        :adjustments,
+        :line_item_adjustments,
+        :shipment_adjustments
+      ].any? do |adjustment_type|
+        user.orders.complete.joins(adjustment_type).where(
+          spree_adjustments: {
+            source_type: 'Spree::PromotionAction',
+            source_id: actions.map(&:id),
+            eligible: true
+          }
+        ).where.not(
+          id: excluded_orders.map(&:id)
+        ).any?
+      end
     end
 
     private

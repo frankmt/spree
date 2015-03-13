@@ -115,20 +115,8 @@ describe Spree::Product, :type => :model do
     context "#display_price" do
       before { product.price = 10.55 }
 
-      context "with display_currency set to true" do
-        before { Spree::Config[:display_currency] = true }
-
-        it "shows the currency" do
-          expect(product.display_price.to_s).to eq("$10.55 USD")
-        end
-      end
-
-      context "with display_currency set to false" do
-        before { Spree::Config[:display_currency] = false }
-
-        it "does not include the currency" do
-          expect(product.display_price.to_s).to eq("$10.55")
-        end
+      it "shows the amount" do
+        expect(product.display_price.to_s).to eq("$10.55")
       end
 
       context "with currency set to JPY" do
@@ -190,7 +178,6 @@ describe Spree::Product, :type => :model do
     end
 
     context "has stock movements" do
-      let(:product) { create(:product) }
       let(:variant) { product.master }
       let(:stock_item) { variant.stock_items.first }
 
@@ -202,7 +189,6 @@ describe Spree::Product, :type => :model do
 
     # Regression test for #3737
     context "has stock items" do
-      let(:product) { create(:product) }
       it "can retrieve stock items" do
         expect(product.master.stock_items.first).not_to be_nil
         expect(product.stock_items.first).not_to be_nil
@@ -247,6 +233,11 @@ describe Spree::Product, :type => :model do
 
     end
 
+    context "hard deletion" do
+      it "doesnt raise ActiveRecordError error" do
+        expect { product.really_destroy! }.to_not raise_error
+      end
+    end
   end
 
   context "properties" do
@@ -411,6 +402,8 @@ describe Spree::Product, :type => :model do
   end
 
   context '#total_on_hand' do
+    let(:product) { create(:product) }
+
     it 'should be infinite if track_inventory_levels is false' do
       Spree::Config[:track_inventory_levels] = false
       expect(build(:product, :variants_including_master => [build(:master_variant)]).total_on_hand).to eql(Float::INFINITY)
@@ -422,16 +415,28 @@ describe Spree::Product, :type => :model do
     end
 
     it 'should return sum of stock items count_on_hand' do
-      product = create(:product)
       product.stock_items.first.set_count_on_hand 5
       product.variants_including_master(true) # force load association
       expect(product.total_on_hand).to eql(5)
     end
 
     it 'should return sum of stock items count_on_hand when variants_including_master is not loaded' do
-      product = create(:product)
       product.stock_items.first.set_count_on_hand 5
       expect(product.reload.total_on_hand).to eql(5)
     end
+  end
+
+  # Regression spec for https://github.com/spree/spree/issues/5588
+  context '#validate_master when duplicate SKUs entered' do
+    let!(:first_product) { create(:product, sku: 'a-sku') }
+    let(:second_product) { build(:product, sku: 'a-sku') }
+
+    subject { second_product }
+    it { is_expected.to be_invalid }
+  end
+
+  it "initializes a master variant when building a product" do
+    product = Spree::Product.new
+    expect(product.master.is_master).to be true
   end
 end

@@ -1,4 +1,4 @@
-<table class="index return-items-table">
+<table class="table table-condensed table-bordered">
   <thead>
     <tr>
       <th>
@@ -8,12 +8,12 @@
       <th><%= Spree.t(:sku) %></th>
       <th><%= Spree.t(:pre_tax_amount) %></th>
       <th><%= Spree.t(:exchange_for) %></th>
+      <th><%= Spree.t(:resellable) %></th>
     </tr>
   </thead>
   <tbody>
     <%= f.fields_for :return_items, return_items do |item_fields| %>
       <% return_item = item_fields.object %>
-
       <tr>
         <td class="align-center" class="inventory-unit-checkbox">
           <div style="display:none">
@@ -21,7 +21,6 @@
             <%= item_fields.hidden_field :return_authorization_id %>
             <%= item_fields.hidden_field :pre_tax_amount %>
           </div>
-
           <%= item_fields.check_box :returned, {checked: false, class: 'add-item', "data-price" => return_item.pre_tax_amount}, '1', '0' %>
         </td>
         <td>
@@ -35,7 +34,10 @@
           <%= return_item.display_pre_tax_amount %>
         </td>
         <td class="align-center">
-          <%= return_item.exchange_variant.try(:options_text) %>
+          <%= return_item.exchange_variant.try(:exchange_name) %>
+        </td>
+        <td class="align-center">
+          <%= item_fields.check_box :resellable, { checked: return_item.resellable } %>
         </td>
       </tr>
     <% end %>

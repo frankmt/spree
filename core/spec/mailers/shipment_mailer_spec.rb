@@ -19,7 +19,7 @@ describe Spree::ShipmentMailer, :type => :mailer do
   context ":from not set explicitly" do
     it "falls back to spree config" do
       message = Spree::ShipmentMailer.shipped_email(shipment)
-      expect(message.from).to eq([Spree::Config[:mails_from]])
+      expect(message.from).to eq([Spree::Store.current.mail_from_address])
     end
   end
 
@@ -32,7 +32,7 @@ describe Spree::ShipmentMailer, :type => :mailer do
   it "shipment_email accepts an shipment id as an alternative to an Shipment object" do
     expect(Spree::Shipment).to receive(:find).with(shipment.id).and_return(shipment)
     expect {
-      shipped_email = Spree::ShipmentMailer.shipped_email(shipment.id)
+      Spree::ShipmentMailer.shipped_email(shipment.id).body
     }.not_to raise_error
   end
 

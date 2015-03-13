@@ -15,10 +15,10 @@ describe Spree::Admin::BaseHelper, :type => :helper do
     end
   end
 
-  context "rails environments" do
-    it "returns the existing environments" do
-      expect(rails_environments).to eql ["development","production", "test"]
+  context "#plural_resource_name" do
+    it "should return correct form of class" do
+      resource_class = Spree::Product
+      expect(plural_resource_name(resource_class)).to eq("Products")
     end
   end
-
 end

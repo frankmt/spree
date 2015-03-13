@@ -58,7 +58,7 @@ module Spree
       end
 
       def currency
-        #TODO calculate from first variant?
+        order.currency
       end
 
       def shipping_categories
@@ -86,6 +86,10 @@ module Spree
           shipping_rates: shipping_rates,
           inventory_units: contents.map(&:inventory_unit)
         )
+      end
+
+      def contents_by_weight
+        contents.sort { |x, y| y.weight <=> x.weight }
       end
     end
   end

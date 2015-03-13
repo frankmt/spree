@@ -1,6 +1,12 @@
 module Spree
   class Payment < Spree::Base
     module Processing
+      extend ActiveSupport::Concern
+      included do
+        class_attribute :gateway_options_class
+        self.gateway_options_class = Spree::Payment::GatewayOptions
+      end
+
       def process!
         if payment_method && payment_method.auto_capture?
           purchase!
@@ -19,22 +25,22 @@ module Spree
       end
 
       # Takes the amount in cents to capture.
-      # Can be used to capture partial amounts of a payment.
-      def capture!(amount=nil)
-        amount ||= money.money.cents
+      # Can be used to capture partial amounts of a payment, and will create
+      # a new pending payment record for the remaining amount to capture later.
+      def capture!(amount = nil)
         return true if completed?
+        amount ||= money.money.cents
         started_processing!
         protect_from_connection_error do
-          check_environment
           # Standard ActiveMerchant capture usage
           response = payment_method.capture(
             amount,
             response_code,
             gateway_options
           )
-
           money = ::Money.new(amount, currency)
           capture_events.create!(amount: money.to_f)
+          split_uncaptured_amount
           handle_response(response, :complete, :failure)
         end
       end
@@ -42,7 +48,6 @@ module Spree
       def void_transaction!
         return true if void?
         protect_from_connection_error do
-          check_environment
 
           if payment_method.payment_profiles_supported?
             # Gateways supporting payment profiles will need access to credit card object because this stores the payment profile information
@@ -69,26 +74,7 @@ module Spree
 
       def gateway_options
         order.reload
-        options = { :email       => order.email,
-                    :customer    => order.email,
-                    :customer_id => order.user_id,
-                    :ip          => order.last_ip_address,
-                    # Need to pass in a unique identifier here to make some
-                    # payment gateways happy.
-                    #
-                    # For more information, please see Spree::Payment#set_unique_identifier
-                    :order_id    => gateway_order_id }
-
-        options.merge!({ :shipping => order.ship_total * 100,
-                         :tax      => order.additional_tax_total * 100,
-                         :subtotal => order.item_total * 100,
-                         :discount => order.promo_total * 100,
-                         :currency => currency })
-
-        options.merge!({ :billing_address  => order.bill_address.try(:active_merchant_hash),
-                        :shipping_address => order.ship_address.try(:active_merchant_hash) })
-
-        options
+        gateway_options_class.new(self).to_hash
       end
 
       private
@@ -128,8 +114,6 @@ module Spree
 
       def gateway_action(source, action, success_state)
         protect_from_connection_error do
-          check_environment
-
           response = payment_method.send(action, money.money.cents,
                                          source,
                                          gateway_options)
@@ -180,19 +164,6 @@ module Spree
         logger.error(Spree.t(:gateway_error))
         logger.error("  #{error.to_yaml}")
         raise Core::GatewayError.new(text)
-      end
-
-      # Saftey check to make sure we're not accidentally performing operations on a live gateway.
-      # Ex. When testing in staging environment with a copy of production data.
-      def check_environment
-        return if payment_method.environment == Rails.env
-        message = Spree.t(:gateway_config_unavailable) + " - #{Rails.env}"
-        raise Core::GatewayError.new(message)
-      end
-
-      # The unique identifier to be passed in to the payment gateway
-      def gateway_order_id
-        "#{order.number}-#{self.identifier}"
       end
 
       def token_based?

@@ -1,6 +1,7 @@
 Spree::Core::Engine.add_routes do
   namespace :admin do
     get '/search/users', to: "search#users", as: :search_users
+    get '/search/products', to: "search#products", as: :search_products
 
     resources :promotions do
       resources :promotion_rules
@@ -37,7 +38,7 @@ Spree::Core::Engine.add_routes do
           post :update_positions
         end
       end
-      resources :variants_including_master,   only: [:update]
+      resources :variants_including_master, only: [:update]
     end
 
     get '/variants/search', to: "variants#search", as: :search_variants
@@ -80,6 +81,8 @@ Spree::Core::Engine.add_routes do
         put :resume
       end
 
+      resources :state_changes, only: [:index]
+
       resource :customer, controller: "orders/customer_details"
       resources :customer_returns, only: [:index, :new, :edit, :create, :update] do
         member do
@@ -113,6 +116,7 @@ Spree::Core::Engine.add_routes do
     resource :general_settings do
       collection do
         post :dismiss_alert
+        post :clear_cache
       end
     end
 
@@ -160,13 +164,16 @@ Spree::Core::Engine.add_routes do
 
     resources :trackers
     resources :payment_methods
+    resources :roles
 
     resources :users do
       member do
-        get :orders
-        get :items
         get :addresses
         put :addresses
+        put :clear_api_key
+        put :generate_api_key
+        get :items
+        get :orders
       end
     end
   end

@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Spree::Reimbursement, :type => :model do
+describe Spree::Reimbursement, type: :model do
 
   describe ".before_create" do
     describe "#generate_number" do
@@ -113,15 +113,15 @@ describe Spree::Reimbursement, :type => :model do
     context 'with included tax' do
       let!(:tax_rate) { create(:tax_rate, name: "VAT Tax", amount: 0.1, included_in_price: true, zone: tax_zone) }
 
-      it 'saves the additional tax and refunds the total' do
+      it 'saves the included tax and refunds the total' do
         expect {
           subject
         }.to change { Spree::Refund.count }.by(1)
         return_item.reload
         expect(return_item.included_tax_total).to be < 0
         expect(return_item.included_tax_total).to eq line_item.included_tax_total
-        expect(reimbursement.total).to eq line_item.pre_tax_amount.round(2, :down)
-        expect(Spree::Refund.last.amount).to eq line_item.pre_tax_amount.round(2, :down)
+        expect(reimbursement.total).to eq (line_item.pre_tax_amount + line_item.included_tax_total).round(2, :down)
+        expect(Spree::Refund.last.amount).to eq (line_item.pre_tax_amount + line_item.included_tax_total).round(2, :down)
       end
     end
 
@@ -129,7 +129,7 @@ describe Spree::Reimbursement, :type => :model do
       let!(:non_return_refund) { create(:refund, amount: 1, payment: payment) }
 
       it 'raises IncompleteReimbursement error' do
-        expect { subject }.to raise_error(Spree::Reimbursement::IncompleteReimbursement)
+        expect { subject }.to raise_error(Spree::Reimbursement::IncompleteReimbursementError)
       end
     end
 
@@ -143,10 +143,9 @@ describe Spree::Reimbursement, :type => :model do
     end
 
     it "triggers the reimbursement mailer to be sent" do
-      expect(Spree::ReimbursementMailer).to receive(:reimbursement_email).with(reimbursement.id) { double(deliver: true) }
+      expect(Spree::ReimbursementMailer).to receive(:reimbursement_email).with(reimbursement.id) { double(deliver_later: true) }
       subject
     end
-
   end
 
   describe "#return_items_requiring_exchange" do

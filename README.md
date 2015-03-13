@@ -28,7 +28,9 @@ interested in. For example, you could use just the barebones spree\_core gem
 and perhaps combine it with your own custom backend admin instead of using
 spree_api.
 
+[![Circle CI](https://circleci.com/gh/spree/spree.svg?style=svg)](https://circleci.com/gh/spree/spree)
 [![Code Climate](https://codeclimate.com/github/spree/spree.png)](https://codeclimate.com/github/spree/spree)
+[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/spree/spree)
 [![Issue Stats](http://issuestats.com/github/spree/spree/badge/pr)](http://issuestats.com/github/spree/spree)
 [![Issue Stats](http://issuestats.com/github/spree/spree/badge/issue)](http://issuestats.com/github/spree/spree)
 
@@ -43,9 +45,9 @@ The fastest way to get started is by using the spree command line tool
 available in the spree gem which will add Spree to an existing Rails application.
 
 ```shell
-gem install rails -v 4.1.6
+gem install rails -v 4.2.0
 gem install spree
-rails _4.1.6_ new my_store
+rails _4.2.0_ new my_store
 spree install my_store
 ```
 
@@ -70,18 +72,18 @@ To select a specific branch, pass in the `--branch` option. If there is no branc
 will be given the latest version of either spree_auth_devise or spree_gateway.
 
 ```shell
-spree install my_store --branch "2-4-stable"
+spree install my_store --branch "3-0-stable"
 ```
 
 Using stable builds and bleeding edge
 -------------
 
 To use a stable build of Spree, you can manually add Spree to your
-Rails application. To use the 2-4-stable branch of Spree, add this line to
+Rails application. To use the 3-0-stable branch of Spree, add this line to
 your Gemfile.
 
 ```ruby
-gem 'spree', github: 'spree/spree', branch: '2-4-stable'
+gem 'spree', github: 'spree/spree', branch: '3-0-stable'
 ```
 
 Alternatively, if you want to use the bleeding edge version of Spree, use this
@@ -95,19 +97,6 @@ gem 'spree', github: 'spree/spree'
 state. It is unwise to use this branch in a production system you care deeply
 about.**
 
-If you wish to have authentication included also, you will need to add the
-`spree_auth_devise` gem as well. Either this:
-
-```ruby
-gem 'spree_auth_devise', github: 'spree/spree_auth_devise', branch: '2-4-stable'
-```
-
-Or this:
-
-```ruby
-gem 'spree_auth_devise', github: 'spree/spree_auth_devise'
-```
-
 Once you've done that, then you can install these gems using this command:
 
 ```shell
@@ -118,19 +107,6 @@ Use the install generator to set up Spree:
 
 ```shell
 rails g spree:install --sample=false --seed=false
-```
-
-At this point, if you are using spree_auth_devise you will need to change this
-line in `config/initializers/spree.rb`:
-
-```ruby
-Spree.user_class = "Spree::LegacyUser"
-```
-
-To this:
-
-```ruby
-Spree.user_class = "Spree::User"
 ```
 
 You can avoid running migrations or generating seed and sample data by passing
@@ -261,11 +237,9 @@ bundle exec rake spree_auth:admin:create
 Running Tests
 -------------
 
-[![Team City](http://www.jetbrains.com/img/logos/logo_teamcity_small.gif)](http://www.jetbrains.com/teamcity)
+We use [CircleCI](https://circleci.com/) to run the tests for Spree.
 
-We use [TeamCity](http://www.jetbrains.com/teamcity/) to run the tests for Spree.
-
-You can see the build statuses at [http://ci.spree.fm](http://ci.spree.fm/guestLogin.html?guest=1).
+You can see the build statuses at [https://circleci.com/gh/spree/spree](https://circleci.com/gh/spree/spree).
 
 ---
 
@@ -335,6 +309,25 @@ Spree roadmap at [https://trello.com/b/PQsUfCL0/spree-roadmap](https://trello.co
 Contributing
 ------------
 
-Spree is an open source project and we encourage contributions. Please see the
-[contributors guidelines](http://guides.spreecommerce.com/developer/contributing.html)
+Spree is an open source project and we encourage contributions. Please review the
+[contributing guidelines](http://guides.spreecommerce.com/developer/contributing.html)
 before contributing.
+
+In the spirit of [free software](http://www.fsf.org/licensing/essays/free-sw.html), **everyone** is encouraged to help improve this project.
+
+Here are some ways **you** can contribute:
+
+* by using prerelease versions / master branch
+* by reporting [bugs](https://github.com/spree/spree/issues/new)
+* by [translating to a new language](https://github.com/spree/spree_i18n/tree/master/config/locales)
+* by writing or editing [documentation](http://guides.spreecommerce.com/developer/contributing.html#contributing-to-the-documentation)
+* by writing [specs](https://github.com/spree/spree/labels/need_specs)
+* by writing [needed code](https://github.com/spree/spree/labels/feature_request) or [finishing code](https://github.com/spree/spree/labels/address_feedback)
+* by [refactoring code](https://github.com/spree/spree/labels/address_feedback)
+* by reviewing [pull requests](https://github.com/spree/spree/pulls)
+* by verifying [issues](https://github.com/spree/spree/labels/unverified)
+
+License
+-------
+
+Spree is released under the [New BSD License](https://github.com/spree/spree/blob/master/license.md).

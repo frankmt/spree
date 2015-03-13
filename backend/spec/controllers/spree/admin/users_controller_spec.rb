@@ -8,6 +8,7 @@ describe Spree::Admin::UsersController, :type => :controller do
   before do
     allow(controller).to receive_messages :spree_current_user => user
     user.spree_roles.clear
+    stub_const('Spree::User', user.class)
   end
 
   context "#show" do
@@ -104,6 +105,11 @@ describe Spree::Admin::UsersController, :type => :controller do
         "bill_address_attributes" => { "city" => "New York" }
       ))
       spree_put :update, { :id => mock_user.id, :user => { :bill_address_attributes => { :city => "New York" } } }
+    end
+
+    it "allows updating without password resetting" do
+      expect(mock_user).to receive(:update_attributes).with(hash_not_including(password: '', password_confirmation: ''))
+      spree_put :update, id: mock_user.id, user: { password: '', password_confirmation: '', email: 'spree@example.com' }
     end
   end
 

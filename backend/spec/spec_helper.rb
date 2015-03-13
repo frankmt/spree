@@ -47,23 +47,15 @@ Capybara.javascript_driver = :poltergeist
 
 RSpec.configure do |config|
   config.color = true
+  config.fail_fast = ENV['FAIL_FAST'] || false
   config.infer_spec_type_from_file_location!
   config.mock_with :rspec
+  config.raise_errors_for_deprecations!
 
   # If you're not using ActiveRecord, or you'd prefer not to run each of your
   # examples within a transaction, comment the following line or assign false
   # instead of true.
   config.use_transactional_fixtures = false
-
-  # A workaround to deal with random failure caused by phantomjs. Turn it on
-  # by setting ENV['RSPEC_RETRY_COUNT']. Limit it to features tests where
-  # phantomjs is used.
-  config.before(:all, :type => :feature) do
-    if ENV['RSPEC_RETRY_COUNT']
-      config.verbose_retry       = true # show retry status in spec process
-      config.default_retry_count = ENV['RSPEC_RETRY_COUNT'].to_i
-    end
-  end
 
   config.before :suite do
     Capybara.match = :prefer_exact
@@ -107,12 +99,24 @@ RSpec.configure do |config|
 
   config.include Spree::TestingSupport::Preferences
   config.include Spree::TestingSupport::UrlHelpers
-  config.include Spree::TestingSupport::ControllerRequests
+  config.include Spree::TestingSupport::ControllerRequests, type: :controller
   config.include Spree::TestingSupport::Flash
 
   config.include Paperclip::Shoulda::Matchers
 
   config.extend WithModel
+end
 
-  config.fail_fast = ENV['FAIL_FAST'] || false
+module Spree
+  module TestingSupport
+    module Flash
+      def assert_flash_success(flash)
+        flash = convert_flash(flash)
+
+        within(".alert-success") do
+          expect(page).to have_content(flash)
+        end
+      end
+    end
+  end
 end

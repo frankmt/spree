@@ -19,7 +19,7 @@ describe Spree::OrderMailer, :type => :mailer do
   context ":from not set explicitly" do
     it "falls back to spree config" do
       message = Spree::OrderMailer.confirm_email(order)
-      expect(message.from).to eq([Spree::Config[:mails_from]])
+      expect(message.from).to eq([Spree::Store.current.mail_from_address])
     end
   end
 
@@ -31,14 +31,14 @@ describe Spree::OrderMailer, :type => :mailer do
   it "confirm_email accepts an order id as an alternative to an Order object" do
     expect(Spree::Order).to receive(:find).with(order.id).and_return(order)
     expect {
-      confirmation_email = Spree::OrderMailer.confirm_email(order.id)
+      Spree::OrderMailer.confirm_email(order.id).body
     }.not_to raise_error
   end
 
   it "cancel_email accepts an order id as an alternative to an Order object" do
     expect(Spree::Order).to receive(:find).with(order.id).and_return(order)
     expect {
-      cancel_email = Spree::OrderMailer.cancel_email(order.id)
+      cancel_email = Spree::OrderMailer.cancel_email(order.id).body
     }.not_to raise_error
   end
 
